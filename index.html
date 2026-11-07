@@ -729,13 +729,13 @@ $("#menuClose").addEventListener("click", () => toggleMenu(false));
 menu.querySelectorAll("nav a").forEach(a => a.addEventListener("click", () => toggleMenu(false)));
 
 /* =========================================================
-   声音：Web Audio 实时合成，默认关闭（右上角 Sound 开关，记住选择）
+   声音：Web Audio 实时合成，默认开启（右上角 Sound 开关，记住选择）
    五声音阶的水滴音 + 木琴，全站共用一个混响
    ========================================================= */
 const sfx = (() => {
   const PENTA = [0, 2, 4, 7, 9], btn = $("#sndBtn");
-  let ctx = null, master = null, bus = null, on = false, voices = 0;
-  try { on = localStorage.getItem("el-snd") === "1"; } catch (e) {}
+  let ctx = null, master = null, bus = null, on = true, voices = 0;   // 默认开启；用户关掉后记住
+  try { on = localStorage.getItem("el-snd") !== "0"; } catch (e) {}
   const last = {};
   const gate = (k, ms) => { const n = performance.now(); if (last[k] && n - last[k] < ms) return false; last[k] = n; return true; };
 
