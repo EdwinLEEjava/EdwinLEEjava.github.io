@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edwin Lee · 游戏作品集</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #000;
+    --paper: #fff;
+    --grey: #8c8c8c;
+    --line: #000;
+    --hair: #e2e2e2;
+    --mark: #ececec;
+    --pad: clamp(16px, 2.2vw, 32px);
+    --rail: clamp(150px, 22vw, 330px);
+    --ease: cubic-bezier(.2,.7,.2,1);
+    --font: "Inter Tight", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--paper); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.25; font-weight: 500; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  img { display: block; max-width: 100%; }
+  ::selection { background: #000; color: #fff; }
+
+  /* 水面 + 角落水印 */
+  #water { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
+  .mark { position: fixed; bottom: -.18em; z-index: 1; pointer-events: none; font-size: clamp(56px, 10vw, 170px); font-weight: 500; letter-spacing: -.06em; color: var(--mark); line-height: 1; }
+  .mark.l { left: var(--pad); } .mark.r { right: var(--pad); }
+  main, footer { position: relative; z-index: 2; }
+
+  /* 顶栏 */
+  .top { position: fixed; top: 0; left: 0; right: 0; z-index: 30; display: grid; grid-template-columns: var(--rail) 1fr auto; align-items: start; padding: var(--pad); pointer-events: none; }
+  .top > * { pointer-events: auto; }
+  .logo { width: 44px; height: 44px; background: #000; color: #fff; display: grid; place-items: center; font-size: 15px; letter-spacing: -.04em; }
+  .top .info { border-left: 1px solid var(--line); padding-left: 14px; font-size: 14px; line-height: 1.15; }
+  .pill { background: #000; color: #fff; border-radius: 99px; padding: 7px 14px 8px; font-size: 14px; line-height: 1; transition: transform .3s var(--ease); }
+  .pill:hover { transform: scale(1.06); }
+
+  /* 菜单 */
+  .menu { position: fixed; inset: 0; z-index: 50; background: #fff; display: grid; grid-template-columns: var(--rail) 1fr; padding: calc(var(--pad) * 4) var(--pad) var(--pad); clip-path: inset(0 0 100% 0); transition: clip-path .7s var(--ease); }
+  .menu.open { clip-path: inset(0 0 0 0); }
+  .menu .close { position: absolute; top: var(--pad); right: var(--pad); }
+  .menu nav { border-left: 1px solid var(--line); padding-left: 14px; display: flex; flex-direction: column; gap: 4px; }
+  .menu nav a { font-size: clamp(48px, 9vw, 130px); letter-spacing: -.06em; line-height: .92; display: flex; align-items: flex-start; gap: 12px; transition: color .25s; }
+  .menu nav a sup { font-size: 14px; letter-spacing: 0; margin-top: .6em; }
+  .menu nav a:hover { color: var(--grey); }
+  .menu .side { font-size: 14px; line-height: 1.4; }
+  .menu .side a { display: block; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* 通用排版 */
+  .big { font-size: clamp(48px, 7.4vw, 120px); letter-spacing: -.055em; line-height: .88; font-weight: 500; }
+  .big span { display: block; }
+  .rail { display: grid; grid-template-columns: calc(var(--rail) + var(--pad)) 1fr; }
+  .rail > .l { padding: 0 var(--pad); }
+  .rail > .r { border-left: 1px solid var(--line); padding-left: 14px; }
+  .small { font-size: 14px; line-height: 1.15; }
+  .grey { color: var(--grey); }
+
+  /* 首屏 */
+  .hero { min-height: 100vh; padding-top: 30vh; padding-bottom: 14vh; }
+  .hero .l { display: flex; align-items: flex-end; padding-bottom: 6px; }
+  .hero .r { padding-bottom: 8px; }
+  .hero .name { margin-bottom: .55em; }
+  .hero .line { overflow: hidden; }
+  .hero .line > span { display: block; transform: translateY(105%); transition: transform 1.1s var(--ease); }
+  .ready .hero .line > span { transform: none; }
+
+  /* 作品 */
+  section { position: relative; }
+  .work-head { text-align: center; padding: 18vh var(--pad) 8vh; }
+  .work-head h2 { display: inline-flex; align-items: flex-start; gap: 10px; }
+  .work-head sup { font-size: 14px; letter-spacing: 0; margin-top: .5em; }
+  .filters { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 20px; margin-top: 28px; font-size: 14px; }
+  .filters button { color: var(--grey); transition: color .25s; display: inline-flex; gap: 4px; }
+  .filters button sup { font-size: 10px; }
+  .filters button:hover, .filters button.on { color: #000; }
+  .filters button.on { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+
+  .collage { display: grid; grid-template-columns: repeat(12, minmax(0,1fr)); column-gap: var(--pad); row-gap: 9vh; padding: 0 var(--pad) 16vh; align-items: start; }
+  .tile { text-align: left; display: block; transition: opacity .4s var(--ease), transform .6s var(--ease); }
+  .tile.hide { opacity: 0; transform: translateY(20px); }
+  .tile.gone { display: none; }
+  .tile .img { overflow: hidden; background: #000; position: relative; }
+  .tile .img img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease), filter .6s; filter: grayscale(1); }
+  .tile:hover .img img, .tile:focus-visible .img img { transform: scale(1.05); filter: grayscale(0); }
+  .tile .cap { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: 14px; line-height: 1.15; }
+  .tile .cap .n { color: var(--grey); }
+  .tile:focus-visible { outline: 1px solid #000; outline-offset: 6px; }
+  .typo { width: 100%; height: 100%; background: #000; color: #fff; display: flex; flex-direction: column; justify-content: space-between; padding: 14px; transition: transform 1.2s var(--ease); }
+  .tile:hover .typo { transform: scale(1.05); }
+  .typo b { font-size: clamp(28px, 3.2vw, 52px); letter-spacing: -.05em; line-height: .9; font-weight: 500; }
+  .typo i { font-style: normal; font-size: 12px; color: #9a9a9a; }
+
+  /* 索引表 */
+  .index { padding: 6vh 0 18vh; }
+  .index .head { padding: 0 var(--pad) 8vh; display: grid; grid-template-columns: var(--rail) 1fr; align-items: end; }
+  .table { margin: 0 var(--pad); }
+  .row { display: grid; grid-template-columns: var(--rail) 1.4fr 1fr 1.6fr .6fr; gap: 12px; padding: 9px 0; border-top: 1px solid var(--hair); font-size: 14px; line-height: 1.2; text-align: left; width: 100%; transition: background .2s, padding .3s var(--ease); }
+  .row:last-child { border-bottom: 1px solid var(--hair); }
+  .row.th { color: var(--grey); border-top: 0; }
+  button.row:hover { background: #000; color: #fff; padding-left: 10px; padding-right: 10px; }
+  .row .go { text-align: right; }
+
+  /* 关于 */
+  .about { padding: 6vh 0 18vh; }
+  .about .r p { max-width: 560px; font-size: 18px; line-height: 1.45; letter-spacing: -.01em; margin-top: 6vh; }
+  .stack { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; max-width: 640px; }
+  .stack span { border: 1px solid #000; border-radius: 99px; padding: 5px 12px 6px; font-size: 13px; }
+
+  /* 联系 */
+  .contact { padding: 10vh 0 26vh; }
+  .contact .big { text-align: left; }
+  .contact .l { display: flex; flex-direction: column; justify-content: center; gap: 22px; }
+  .contact .l a { text-decoration: underline; text-underline-offset: 3px; }
+  .circles { display: flex; gap: 10px; margin-top: 8vh; }
+  .circles a { width: 52px; height: 52px; border: 1px solid #000; border-radius: 50%; display: grid; place-items: center; font-size: 12px; transition: background .25s, color .25s; }
+  .circles a:hover { background: #000; color: #fff; }
+  footer { display: flex; justify-content: space-between; padding: var(--pad); font-size: 12px; }
+
+  /* 详情 */
+  .detail { position: fixed; inset: 0; z-index: 60; background: #fff; overflow-y: auto; opacity: 0; visibility: hidden; transition: opacity .45s var(--ease), visibility .45s; }
+  .detail.open { opacity: 1; visibility: visible; }
+  .detail .bar { position: sticky; top: 0; display: flex; justify-content: flex-end; padding: var(--pad); z-index: 2; }
+  .d-inner { padding: 4vh 0 16vh; transform: translateY(30px); transition: transform .7s var(--ease); }
+  .detail.open .d-inner { transform: none; }
+  .d-meta { display: flex; flex-direction: column; gap: 18px; }
+  .d-meta dl div { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid var(--hair); }
+  .d-meta dt { color: var(--grey); }
+  .d-meta dd { text-align: right; }
+  .d-links { display: flex; flex-direction: column; gap: 6px; }
+  .d-links a { text-decoration: underline; text-underline-offset: 3px; }
+  .d-body p { font-size: 18px; line-height: 1.45; max-width: 640px; margin-top: 1em; letter-spacing: -.01em; }
+  .d-body ul { list-style: none; margin-top: 2em; max-width: 640px; border-top: 1px solid var(--hair); }
+  .d-body li { padding: 9px 0; border-bottom: 1px solid var(--hair); font-size: 15px; line-height: 1.4; display: grid; grid-template-columns: 34px 1fr; }
+  .d-body li::before { content: counter(li, decimal-leading-zero); counter-increment: li; color: var(--grey); font-size: 12px; padding-top: 2px; }
+  .d-body ul { counter-reset: li; }
+  .d-imgs { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--pad); margin: 48px var(--pad) 0; }
+  .d-imgs img, .d-imgs .typo { width: 100%; aspect-ratio: 16/10; object-fit: cover; }
+  .d-imgs .wide { grid-column: span 2; }
+  .d-imgs img:only-child { grid-column: span 2; max-width: 1000px; }
+  .d-nav { display: flex; justify-content: space-between; margin: 10vh var(--pad) 0; padding-top: 12px; border-top: 1px solid #000; }
+  .d-nav button:hover { color: var(--grey); }
+  .d-sec { margin-top: 120px; }
+  .d-sec h3 { font-size: clamp(28px, 3.4vw, 48px); letter-spacing: -.045em; line-height: .95; font-weight: 500; }
+  .d-sec p { margin-top: .8em; }
+  .d-imgs.n3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .d-imgs.n3 img { aspect-ratio: 1/1; }
+  .d-imgs.n2 img { aspect-ratio: 6/5; }
+  .d-imgs img[src$=".png"] { image-rendering: pixelated; object-fit: contain; background: #f5f5f5; }
+  .d-imgs.n1 img { aspect-ratio: auto; grid-column: span 2; width: auto; max-width: 100%; justify-self: start; }
+  .d-imgs img[src*="pv-plan"], .d-imgs img[src*="pv-group"] { object-fit: contain; background: #f6f2ea; }
+  .d-imgs video { grid-column: span 2; width: 100%; aspect-ratio: 16/9; background: #000; display: block; }
+  .d-imgs img[src*="thermal"] { aspect-ratio: 16/9; }
+  .d-imgs img[src*="fr-"], .d-imgs img[src*="px-"] { image-rendering: pixelated; object-fit: contain; background: #f2f2f2; aspect-ratio: auto; }
+  .tile .img img[src*="fr-"], .tile .img img[src*="px-"] { image-rendering: pixelated; }
+  .tile .img img[src*="px-"] { object-fit: contain; background: #f2f2f2; }
+  .d-imgs img[src*="px-"] { image-rendering: auto; }
+  .tile .img img[src*="px-maw"] { object-fit: cover; background: #000; }
+  .note { color: var(--grey); font-size: 13px; margin-top: 2em; }
+
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 1s var(--ease), transform 1s var(--ease); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  @media (max-width: 760px) {
+    :root { --rail: 0px; }
+    .top { grid-template-columns: auto 1fr auto; gap: 12px; }
+    .rail { grid-template-columns: 1fr; }
+    .rail > .l { padding: 0 var(--pad) 18px; }
+    .rail > .r { margin-left: var(--pad); }
+    .hero { padding-top: 22vh; }
+    .collage { grid-template-columns: 1fr; row-gap: 56px; }
+    .tile { grid-column: 1 / -1 !important; margin-top: 0 !important; }
+    .row { grid-template-columns: 1fr 1fr; }
+    .row > :nth-child(3), .row > :nth-child(4) { display: none; }
+    .index .head { grid-template-columns: 1fr; }
+    .d-imgs, .d-imgs.n3 { grid-template-columns: 1fr; }
+    .d-imgs.n1 img { grid-column: auto; }
+    .d-imgs img:only-child, .d-imgs .wide { grid-column: auto; }
+    .menu { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; }
+    .reveal { opacity: 1; transform: none; }
+    .hero .line > span { transform: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="water" aria-hidden="true"></canvas>
+<div class="mark l" aria-hidden="true">edwin</div>
+<div class="mark r" aria-hidden="true">lee</div>
+
+<header class="top">
+  <a class="logo" href="#home" aria-label="回到顶部">EL</a>
+  <div class="info">Game Designer<br>&amp; Developer</div>
+  <button class="pill" id="menuBtn" aria-expanded="false" aria-controls="menu">Menu</button>
+</header>
+
+<div class="menu" id="menu" aria-hidden="true">
+  <button class="pill close" id="menuClose">Close</button>
+  <div class="side grey">Edwin Lee<br>游戏设计 · 开发</div>
+  <nav>
+    <a href="#home"><sup>1</sup>Home</a>
+    <a href="#work"><sup>2</sup>Work</a>
+    <a href="#index"><sup>3</sup>Index</a>
+    <a href="#about"><sup>4</sup>About</a>
+    <a href="#contact"><sup>5</sup>Contact</a>
+  </nav>
+</div>
+
+<main>
+  <section class="hero rail" id="home">
+    <div class="l small">做游戏，<br>也做做游戏的工具</div>
+    <div class="r">
+      <h1 class="big name"><span class="line"><span>Edwin</span></span><span class="line"><span>Lee</span></span></h1>
+      <div class="big" aria-label="Games, Tools & Worlds.">
+        <span class="line"><span>Games,</span></span>
+        <span class="line"><span>Tools</span></span>
+        <span class="line"><span>&amp; Worlds.</span></span>
+      </div>
+    </div>
+  </section>
+
+  <section id="work">
+    <div class="work-head">
+      <h2 class="big reveal">Work<sup id="workCount"></sup></h2>
+      <div class="filters reveal" id="filters" role="tablist" aria-label="作品分类"></div>
+    </div>
+    <div class="collage" id="collage"></div>
+  </section>
+
+  <section class="index" id="index">
+    <div class="head">
+      <div class="small grey" style="padding-left:0">全部作品<br>一览</div>
+      <h2 class="big reveal">Index</h2>
+    </div>
+    <div class="table reveal" id="table"></div>
+  </section>
+
+  <section class="about rail" id="about">
+    <div class="l small grey">About</div>
+    <div class="r">
+      <h2 class="big reveal"><span>Play</span><span>first,</span><span>build</span><span>second.</span></h2>
+      <p class="reveal">我是 Edwin Lee，做游戏，也做帮助做游戏的工具。从教育游戏公司的多人协作课程、Game Jam 原型，到 Minecraft 模组、程序化建筑生成器，再到用声音和水波来演奏的解谜游戏——我关心的是一个想法能不能被“玩”出来。</p>
+      <div class="stack reveal">
+        <span>游戏设计</span><span>玩法原型</span><span>程序化生成</span><span>JavaScript</span><span>Three.js / WebGL</span><span>Web Audio</span><span>Python</span><span>Java · Fabric</span><span>GDevelop</span><span>Luanti / Lua</span><span>关卡设计</span><span>像素美术</span><span>GLSL 着色器</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact rail" id="contact">
+    <div class="l small">
+      <div>Available for<br>selected projects</div>
+      <div><span class="grey">在这些地方找到我</span><br><a href="https://github.com/EdwinLEEjava" target="_blank" rel="noopener">github.com/EdwinLEEjava</a></div>
+    </div>
+    <div class="r">
+      <h2 class="big reveal"><span>nothing</span><span>more</span><span style="padding-left:1.2em">than a</span><span>game.</span></h2>
+      <div class="circles">
+        <a href="https://github.com/EdwinLEEjava" target="_blank" rel="noopener" aria-label="GitHub">GH</a>
+        <a href="https://nameless13.itch.io/not-coming-out-simulator" target="_blank" rel="noopener" aria-label="itch.io">itch</a>
+        <a href="https://www.bilibili.com/video/BV1TLTy64ErK/" target="_blank" rel="noopener" aria-label="bilibili">B站</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><span>'26 © Edwin Lee</span><span>made w/ water</span></footer>
+
+<div class="detail" id="detail" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+  <div class="bar"><button class="pill" id="dClose">Close</button></div>
+  <div class="d-inner" id="dInner"></div>
+</div>
+
+<script>
+/* =========================================================
+   作品数据：改这里就能增删作品
+   cover: 图片路径；没有图片时用 typo（黑底大字封面）
+   slot: 在错落网格里的位置（列起点 / 跨度 / 上偏移），可不填
+   ========================================================= */
+const CATS = ["全部", "实习项目", "独立游戏", "Game Jam", "工具", "模组"];
+
+const WORKS = [
+  {
+    id: "solar", title: "光伏发电关卡", en: "Solar for All", cat: "实习项目", when: "2026 · SeedEdu",
+    cover: "assets/pv-village.jpg",
+    shots: [],
+    lead: "一门面向学生的英文项目式课程，基于 Luanti 引擎。学生以“能源守护者”的身份收到镇长 Elena 的来信，来到地中海山谷小镇 Sol Valley，分角色侦察日照、清理障碍、选址建造光伏板，在有限预算内达成发电目标。这一关由我负责，包括地图、场景和关卡流程。",
+    points: [
+      "完整的大地图：从手绘高度图到程序化生成，经过多轮迭代",
+      "西班牙山村：成片住宅、广场、农庄与牧场，沿台地错落布置",
+      "地中海配色与水下生态：统一的草、叶、水调色板，河湖里成片的水下植被",
+      "关卡内容：线索照片、建造器道具、新手教程，以及后续课程的目标与预算平衡",
+      "教师控制台编辑器：可视化修改游戏内教师手册的离线工具"
+    ],
+    sections: [
+      { h: "地形设计", text: "先在 Photoshop 里手绘高度图和生态分区：一条河谷从中间穿过，北侧是缓坡和山丘，南侧留给农田。再用 Python 把它生成为体素地形，经过多轮迭代，逐步加入河床、岸线过渡、农田、牧场和高山草甸。", imgs: ["assets/pv-height.jpg", "assets/pv-biome.jpg", "assets/pv-terrain.jpg"] },
+      { h: "村庄规划", text: "聚落围绕北侧较缓的平台广场展开，向东、向南顺坡延伸；丘顶保留一座庭院大宅，住宅各自落在小台地上，不把整个山头削平。主街和巷道分级，并在全图规划了多个功能落点，把农田、牧场、河边和林地的生活痕迹串起来。", imgs: ["assets/pv-plan.jpg", "assets/pv-group.jpg"] },
+      { h: "成图", text: "最终地图合并了住宅区、乡村道路网、南部农庄、东侧水坝和多处局部组景。逐户检查了住宅和红砖屋面的接缝；坡度平缓的地方种满成熟小麦。", imgs: ["assets/pv-overview.jpg"] },
+      { h: "建筑与植被", text: "民居使用统一的白墙红瓦模板，按台地高差调整朝向和入口；橡树、金合欢、银白杨等树种都做成了多尺寸、多变体的模板库，避免整片树林看起来一模一样。", imgs: ["assets/pv-house.jpg", "assets/pv-fields.jpg"] },
+      { h: "水与生态", text: "整张图统一为偏黄的地中海色调：草地和树叶偏黄绿，静水从河流的灰绿过渡到深湖的蓝绿。所有低于水位的床底统一铺上砾石、沙和泥土，再按水深和噪声种下水草，局部留出裸底。", imgs: ["assets/pv-river.jpg", "assets/pv-trees.jpg"] },
+      { h: "线索与道具", text: "侦察阶段用的线索照片取自地图里的真实场景，学生要对照照片找到对应位置；建造器是学生放置光伏板的手持道具，用 Blockbench 建模。", imgs: ["assets/pv-clues.jpg", "assets/pv-builder.jpg"] },
+      { h: "教师控制台编辑器", text: "游戏里的教师手册有多页按钮和说明，原本只能改 Lua 源码。我做了一个离线网页工具：可以拖动组件调整布局、批量修改文案、对比与线上版本的差异，再导出 Lua 文件合并回课程。", imgs: ["assets/pv-console.jpg"] }
+    ],
+    facts: { 类型: "多人协作 · 英文教育游戏", 引擎: "Luanti（Lua）", 地形: "Python 程序化生成", 职责: "关卡负责人", 形式: "SeedEdu 实习" },
+    links: []
+  },
+  {
+    id: "glacier", title: "冰川核电站", en: "Glacier Expedition", cat: "实习项目", when: "2026 · SeedEdu",
+    cover: "assets/np-tower-on.jpg",
+    shots: [],
+    lead: "一节多人协作的教育游戏课，基于 Luanti 引擎。小队从科考站出发，穿过苔原、火山和冰川，唤醒山顶的加热塔，再一路护送能量回到核电站。我负责其中的关卡、玩法系统、美术素材和场景搭建。",
+    points: ["从概念草图、白盒到等高线地图的完整关卡设计", "四职业协作：向导、前锋、医疗兵、天气预报员", "动态环境温度，以及在引擎着色器里实现的逐像素热成像", "冰川加热塔地标建筑与升温解冻演出", "科考站资料终端：一整套独立的像素 UI 素材"],
+    sections: [
+      { h: "关卡与地图", text: "先用色块画出山谷、河流和核电站的位置关系，再做白盒确定攀爬节奏，最后整理成带等高线、道路和水系的设计图，作为地形生成和队伍路线的依据。", imgs: ["assets/np-concept.jpg", "assets/np-blockout.jpg", "assets/np-contour.jpg"] },
+      { h: "冰川加热塔", text: "关卡终点的地标建筑：只用标准方块和楼梯搭建，配色限制在白、灰、黑，蓝橙两色只留给核心状态灯。按真实地形快照试摆，再做了一段升温解冻演出：核心由下往上变橙，覆盖的冰雪按距离依次消融，并伴有白雾、水滴和碎冰粒子。", imgs: ["assets/np-tower-ice.jpg", "assets/np-tower-on.jpg"] },
+      { h: "动态温度", text: "野外的冷不是均匀的一片，而是一团团顺风漂移的冷暖气团。区域决定温度上下限，树林能遮挡一部分寒冷，海拔越高越冷。这些差异只有戴护目镜的温度探测员能看到，其他人要听他指挥选路，让“往哪走、要不要等”成为小队每隔几十秒就要商量的决定。", imgs: ["assets/np-goggles.png", "assets/np-thermal.jpg"] },
+      { h: "引擎层热成像", text: "护目镜的热成像先在 mod 层做了两版：服务端打射线放粒子，或用低分辨率的 HUD 色块拼画面，结果都是闪烁的马赛克，转头还有延迟。我改到引擎的场景着色器里逐像素计算温度：方块和实体可以登记自己的温度，火把、岩浆附近的地面会被“烘暖”，正对镜头的面更热、轮廓偏暗，远处按大气衰减退回背景温度，最后映射到铁虹色带，再叠一层传感器颗粒和暗角。不额外增加渲染遍数，低画质档也能用。", imgs: ["assets/np-thermal-fire.jpg", "assets/np-thermal-cabin.jpg"] },
+      { h: "四职业协作", text: "每四人一组，均衡分配四个职业。向导能生成传送门；前锋能感知附近的补给箱、用信号枪召唤补给；医疗兵使用消耗品时恢复效果更强，还能用提灯给队友持续治疗；天气预报员可以放置护盾，让范围内的队友不因受伤和寒冷降低体力上限。每种能力都在服务端独立鉴权。" },
+      { h: "科考站资料终端", text: "游戏内的图鉴与教学终端：前言、分页目录、主题页和实时演示四种页面。按原版 GUI 的凸起边框和凹槽风格，画了一整套独立的像素素材（按钮多种状态、图标、面板、进度条），文字不烘焙进图片，方便后续改文案。", imgs: ["assets/np-ui.jpg"] }
+    ],
+    facts: { 类型: "多人协作 · 教育游戏", 引擎: "Luanti（Lua）", 职责: "关卡 · 系统 · 美术 · 引擎", 形式: "SeedEdu 实习" },
+    links: []
+  },
+  {
+    id: "hospital", title: "医院关卡", en: "Little Hospital", cat: "实习项目", when: "2026 · SeedEdu",
+    cover: "assets/hos-cover.jpg",
+    shots: [],
+    lead: "一节多人合作的医院经营课，基于 Luanti 引擎。玩家分工接诊、诊断、查阅医学大全、制药、染色、安排床位和喂药，在病人失去耐心之前把他们治好。",
+    points: [
+      "完整的治疗链：扫描诊断 → 查医学大全 → 床位建议 → 制药 → 剂量与染色 → 分配床椅 → 喂药",
+      "耐心与评分：病人会逐渐失去耐心；评分综合用药是否正确、床位是否合适和治疗速度",
+      "多剂量疗程：不同病症需要的药量不同，进度可存档恢复",
+      "新手教程：一位病人带着做、两位病人自己练，再正式开诊；扫描与查阅按个人记录，制药与治疗按团队共享进度",
+      "医院空间设计：参考《双点医院》的配色，规划一个主空间和三个房间，区分问诊、制药和染色区域"
+    ],
+    sections: [
+      { h: "空间布局", text: "医院由一个主空间和三个房间组成，配色参考《双点医院》：薄荷绿主空间、深绿与蓝灰房间、奶油白墙。长问诊台在主空间，制药区在右下房间，染色区在左下房间。设备放在哪里，决定了玩家要怎么跑动，也决定了多人之间怎样分工。", imgs: ["assets/hos-layout.jpg"] }
+    ],
+    facts: { 类型: "多人合作 · 经营", 引擎: "Luanti（Lua）", 职责: "玩法 · 关卡 · 实现", 形式: "SeedEdu 实习" },
+    links: []
+  },
+  {
+    id: "fruit", title: "水果地板", en: "Fruit Floor", cat: "实习项目", when: "2026 · SeedEdu",
+    cover: "assets/fr-grid.png",
+    shots: [],
+    lead: "给低龄学生的英语词汇课，基于 Luanti 引擎。地板上铺满水果图案，大屏幕显示单词或播放读音，学生要在倒计时结束前跑到对应的水果上。这一关由我负责，包括玩法、关卡流程和全部美术。",
+    points: [
+      "一组常见水果单词，配合图片和读音学习",
+      "多轮挑战：图文加读音、只看单词、只听读音三种提示交替，答对加分、答错扣分，每轮地板重新洗牌",
+      "三段式课堂：认识水果 → 地板挑战 → 复习庆祝，老师可以随时重玩或回到引导练习",
+      "原创像素水果和提示屏，分“结构稿 → 精修稿”两轮绘制",
+      "自动化测试覆盖计分、洗牌、重复结算保护和地板复位"
+    ],
+    sections: [
+      { h: "像素水果", text: "每个水果都直接在最终尺寸的画布上绘制，不从大图缩小。第一轮只确定轮廓、分区和主要明暗，保证在地板上远看也能认出来：香蕉是弯月形，葡萄是下窄上宽的一串，梨要有明显的“腰”和苹果区分开；第二轮只在形体内部加高光和细节，不改动轮廓。", imgs: ["assets/fr-pass.png"] },
+      { h: "地板与提示屏", text: "地板上每种水果至少出现一次，每轮随机重排；大屏幕用深绿底、奶黄字的统一样式显示单词和“GET READY”“LISTEN”“WELL DONE!”等提示，和地板的配色呼应。", imgs: ["assets/fr-grid.png", "assets/fr-screens.png"] }
+    ],
+    facts: { 类型: "英语词汇 · 体感小游戏", 引擎: "Luanti（Lua）", 职责: "关卡负责人 · 美术", 形式: "SeedEdu 实习" },
+    links: []
+  },
+  {
+    id: "pixelart", title: "像素美术技能包", en: "mc-pixel-art", cat: "工具", when: "持续更新",
+    cover: "assets/px-maw-front.png",
+    shots: [],
+    lead: "一套给 AI 助手用的 Minecraft 风格像素美术技能包（Skill），把我画贴图、图标、GUI 和 Blockbench 模型的方法整理成可执行的流程、规则和检查脚本。下面的怪物模型、白银套装都是用它完成的。",
+    points: [
+      "三条硬规则：先看参考图再画；直接在最终分辨率上画，不从大图缩小；轮廓和线条优先，细化不能破坏它们",
+      "两轮绘制：第一轮锁定轮廓、分区和明暗，第二轮只在形体内部精修",
+      "按方块、物品、实体、GUI、粒子等类别分流，各有对应的研究资料和配色规则",
+      "84 篇参考文档，涵盖像素原则、材质特征、配色、GUI、粒子和实体模型研究",
+      "14 个辅助脚本：色阶生成、贴图自检（尺寸、透明、杂色、接缝）、Blockbench 模型检查、Photoshop 自动化"
+    ],
+    sections: [
+      { h: "实体模型：深渊巨口", text: "用 Blockbench 搭建的怪物模型和贴图：方块状的头部、成排的獠牙和四条分节触手。贴图按“结构稿 → 精修稿”两轮完成，第二轮只在形体内部加石纹和暗部，不改轮廓。", imgs: ["assets/px-maw-front.png", "assets/px-maw-back.png"] },
+      { h: "两轮绘制", text: "左边是第一轮结构稿，只定轮廓、分区和明暗；右边是第二轮精修稿，在不破坏轮廓和线条的前提下补充细节。", imgs: ["assets/px-maw-pass.png", "assets/px-wisp.png"] },
+      { h: "白银套装", text: "一套完整的矿物素材：白银锭、粗白银、白银矿和白银块，以及对应的头盔护甲。矿石按原版石头底纹重绘，并和锡矿、铁矿放在一起对比，检查同一张图里是否容易区分；护甲和钢、金两种材质对比，确认质感不同。", imgs: ["assets/px-silver.png", "assets/px-ore.png"] },
+      { h: "自检脚本", text: "check_texture.py 会检查尺寸、透明通道、颜色数量、孤立像素、条带、平铺接缝和“混合像素”（缩放留下的中间色），并输出 16 倍放大图和 3×3 平铺预览；check_bbmodel.py 检查 Blockbench 模型的 UV 密度、未展开的面和共面问题。让 AI 画完之后先自己验收，再交给人看。" }
+    ],
+    facts: { 类型: "AI 技能包 · 美术流程", 范围: "贴图 · 图标 · GUI · 模型", 工具: "Python · Photoshop · Blockbench", 规模: "84 篇文档 · 14 个脚本" },
+    links: []
+  },
+  {
+    id: "lighting", title: "关卡灯光工作台", en: "Level Lighting", cat: "工具", when: "2026 · SeedEdu",
+    typo: ["/lighting"], typoSub: "Luanti 引擎 · 动态光源",
+    lead: "Luanti 原本的光照是按格的亮度等级，烘焙在顶点色里：一盏灯没有位置、方向和衰减，放一个火把只是把周围一团方块整体调亮，关卡布光的基本手法都做不出来。我在引擎里加了动态光源，又做了一个游戏内的布光工具，让关卡设计者不写代码也能布光。",
+    points: [
+      "引擎层：漫反射锥光、逐光源高光、可见光柱、聚光灯和点光阴影，支持多盏动态灯同时生效",
+      "三步布光：输入 /lighting 选灯型（暖色室内灯、冷色工作灯、重点照明、故障闪烁灯）→ 点击场景放灯 → 保存",
+      "灯组可以整体开关、调亮度，并设置常亮、呼吸、闪烁、警报等动画",
+      "房间补光、灰度和固定曝光检查、单灯查看，方便判断布光是否合理",
+      "多人协作安全：草稿只对编辑者可见，保存是一次原子操作，版本冲突时不会覆盖别人的修改",
+      "提供 Lua 接口，关卡脚本可以在剧情中开关灯组、做渐变"
+    ],
+    sections: [
+      { h: "为什么要做", text: "关卡设计里的三点布光、六向布光都依赖光的方向和角度，原引擎表达不了。新方案不做延迟渲染，也不改方块的亮度等级，而是把灯光数据传给场景着色器逐像素累加，所以和原有画面完全兼容，关掉时一模一样。" }
+    ],
+    facts: { 类型: "引擎功能 · 关卡工具", 技术: "C++ · GLSL · Lua", 平台: "Luanti（SeedEdu 分支）", 形式: "SeedEdu 实习" },
+    links: []
+  },
+  {
+    id: "anchor", title: "抛锚", en: "Drop Anchor", cat: "Game Jam", when: "2026 · CGJ",
+    cover: "assets/anchor-cover.jpg",
+    shots: ["assets/anchor-play.jpg", "assets/anchor-levels.jpg"],
+    lead: "CGJ 2026 参赛作品。一艘小船一直向前开，玩家按住鼠标拖动瞄准，松开后把锚射出去，钩住地形来控制船的去向。",
+    points: ["核心操作只有一个：拖动瞄准、松手抛锚", "海洋、沙漠、太空三个场景", "像素风美术", "美术、策划、程序均由本人完成"],
+    facts: { 类型: "动作 · 休闲", 场合: "CGJ 2026", 角色: "美术 · 策划 · 程序", 状态: "Demo" },
+    links: [["观看演示视频（bilibili）", "https://www.bilibili.com/video/BV1TLTy64ErK/"]]
+  },
+  {
+    id: "voxel", title: "水中体素", en: "Music Voxel", cat: "独立游戏", when: "开发中",
+    cover: "assets/voxel-1.jpg",
+    shots: ["assets/voxel-2.jpg"],
+    lead: "在黑色的水面上放置方块、搭建结构，再用声音和水波“演奏”它。点远处的水面，水波一路扩散，碰到的方块依次奏响。",
+    points: [
+      "搭出灯塔、环、拱门、桥、平台、锚、阶梯 7 种特殊建筑，会被自动识别并解锁对应乐器",
+      "7 种乐器：管钟、钢片琴、吉他、马林巴、弦乐、贝斯、竖琴，全部用 Web Audio 实时合成",
+      "相连的方块组成漂浮刚体：拆掉中间会断开成两块，搭到一起会合并",
+      "发声只由玩家触发，带限流，结构再大也不会变吵",
+      "低多边形水面着色器与涟漪，原生 ES Modules，无需打包"
+    ],
+    facts: { 类型: "解谜 · 音乐 · 建造", 引擎: "Three.js（WebGL）", 平台: "网页", 角色: "独立开发", 状态: "开发中" },
+    links: []
+  },
+  {
+    id: "mcgen", title: "MC 建筑生成器", en: "mcgen", cat: "工具", when: "持续更新",
+    cover: "assets/mcgen-house.jpg",
+    shots: ["assets/mcgen-ui.jpg"],
+    lead: "参数化的 Minecraft 建筑生成器：大模型只输出高层设计参数，代码负责把参数翻译成好看的方块。整个产品是一个约 400 KB 的离线网页。",
+    points: [
+      "12 种屋顶剖面、7 种户型、披屋 / 马厩 / 铁匠铺 / 楼梯塔等附属建筑",
+      "比例规则自动校正：超出合理范围时按“改动最小”调整并写进报告",
+      "按颜色换材质：在 OKLab 色彩空间里为屋顶、墙面、木构挑最接近的原版方块",
+      "斜向摆放、老虎窗、楼梯转角预计算；175 栋测试房屋全部无漏缝",
+      "地形贴合的道路与街区布局；导出 .schem，可直接用 WorldEdit 载入",
+      "JavaScript 主实现 + Python 参考实现，同一个种子逐格一致"
+    ],
+    sections: [
+      { h: "宣传片", text: "38 秒的功能演示：户型切换、任意角度旋转、顺地势铺路并自动架桥，再到一次生成整片街区和顺着山势布局的山地小镇。", video: true },
+      { h: "生成器界面", text: "生成器、3D 预览、换色和导出 .schem 都在一个约 400 KB 的离线网页里，不加载任何外部资源。", imgs: ["assets/mcgen-house.jpg", "assets/mcgen-ui.jpg"] }
+    ],
+    facts: { 类型: "程序化生成工具", 技术: "JavaScript · Python", 平台: "网页（离线）", 开源: "MIT" },
+    video: "assets/mcgen-promo.mp4", poster: "assets/mcgen-promo.jpg",
+    links: [["在线试用", "https://edwinleejava.github.io/mc_building_gen/"], ["GitHub 仓库", "https://github.com/EdwinLEEjava/mc_building_gen"]]
+  },
+  {
+    id: "constant", title: "永恒领域", en: "The Constant", cat: "模组", when: "早期开发",
+    typo: ["The", "Constant"], typoSub: "Minecraft 1.21.10 · Fabric",
+    lead: "把《饥荒》的硬核生存内容带进 Minecraft 的模组。目标不是照搬，而是做一片和原版融为一体的“永恒大陆”。",
+    points: [
+      "精神值系统：生命、饥饿、精神三项生存模型，低精神会出现暗影生物和幻觉",
+      "食物腐烂与烹饪锅",
+      "常青树林生物群系：自定义地形、植被与资源",
+      "饥荒式科技树合成界面",
+      "规划中：季节与温度、更多生物群系与 Boss"
+    ],
+    facts: { 平台: "Minecraft 1.21.10", 加载器: "Fabric", 依赖: "GeckoLib · Cardinal Components", 状态: "早期开发" },
+    links: [["GitHub 仓库", "https://github.com/EdwinLEEjava/dontstravemc-1.21.10"]]
+  },
+  {
+    id: "ncos", title: "不出柜模拟器", en: "Not Coming Out Simulator", cat: "独立游戏", when: "原型 v0.1.3",
+    cover: "assets/ncos.jpg",
+    shots: [],
+    lead: "一款正在开发中的 2D 游戏原型，用 GDevelop 制作，可以在 itch.io 免费下载。",
+    points: ["2D，HTML5 平台", "制作中未使用生成式 AI"],
+    facts: { 引擎: "GDevelop", 平台: "HTML5", 状态: "原型 v0.1.3" },
+    links: [["itch.io 页面", "https://nameless13.itch.io/not-coming-out-simulator"]]
+  }
+];
+
+/* 错落网格的位置模板（12 栏）：[起始列, 跨度, 上偏移(vh), 宽高比] */
+const SLOTS = [
+  [2, 5, 0, "16/10"], [8, 4, 14, "4/3"], [1, 3, -4, "1/1"], [5, 4, 10, "4/3"],
+  [10, 3, -6, "3/4"], [3, 5, 4, "16/10"], [9, 4, 16, "4/3"]
+];
+
+/* ---------- 渲染 ---------- */
+const $ = s => document.querySelector(s);
+const collage = $("#collage"), filters = $("#filters"), table = $("#table");
+let current = "全部";
+try { const s = localStorage.getItem("el-cat"); if (CATS.includes(s)) current = s; } catch (e) {}
+
+const coverHTML = (w, cls = "") => w.cover
+  ? `<img src="${w.cover}" alt="${w.title}" loading="lazy">`
+  : `<div class="typo ${cls}"><b>${w.typo.join("<br>")}</b><i>${w.typoSub || ""}</i></div>`;
+
+function renderFilters() {
+  const cats = CATS.filter(c => c === "全部" || WORKS.some(w => w.cat === c));
+  filters.innerHTML = cats.map(c => {
+    const n = c === "全部" ? WORKS.length : WORKS.filter(w => w.cat === c).length;
+    return `<button role="tab" data-c="${c}" class="${c === current ? "on" : ""}" aria-selected="${c === current}">${c}<sup>${String(n).padStart(2, "0")}</sup></button>`;
+  }).join("");
+}
+function layout(list) {
+  list.forEach((w, i) => {
+    const el = collage.querySelector(`[data-id="${w.id}"]`);
+    const [start, span, mt, ratio] = SLOTS[i % SLOTS.length];
+    el.style.gridColumn = `${start} / span ${span}`;
+    el.style.marginTop = mt + "vh";
+    el.querySelector(".img").style.aspectRatio = ratio;
+  });
+}
+function renderCollage() {
+  collage.innerHTML = WORKS.map((w, i) => `
+    <button class="tile" data-id="${w.id}" data-c="${w.cat}" aria-label="${w.title}，${w.cat}，${w.when}">
+      <div class="img">${coverHTML(w)}</div>
+      <div class="cap"><span>${w.title} <span class="grey">${w.en}</span></span><span class="n">${w.when}</span></div>
+    </button>`).join("");
+}
+function renderTable() {
+  table.innerHTML = `<div class="row th"><span>时间 / 状态</span><span>作品</span><span>分类</span><span>技术</span><span class="go"></span></div>` +
+    WORKS.map(w => `<button class="row" data-id="${w.id}"><span>${w.when}</span><span>${w.title}</span><span>${w.cat}</span><span>${w.facts.引擎 || w.facts.技术 || w.facts.工具 || w.facts.加载器 || w.facts.角色 || ""}</span><span class="go">查看 →</span></button>`).join("");
+}
+const visible = () => WORKS.filter(w => current === "全部" || w.cat === current);
+function applyFilter(c, animate = true) {
+  current = c;
+  try { localStorage.setItem("el-cat", c); } catch (e) {}
+  filters.querySelectorAll("button").forEach(b => { const on = b.dataset.c === c; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); });
+  const list = visible();
+  $("#workCount").textContent = "(" + String(list.length).padStart(2, "0") + ")";
+  const tiles = [...collage.children];
+  const show = t => c === "全部" || t.dataset.c === c;
+  if (!animate) { tiles.forEach(t => t.classList.toggle("gone", !show(t))); layout(list); return; }
+  tiles.forEach(t => t.classList.add("hide"));
+  setTimeout(() => {
+    tiles.forEach(t => t.classList.toggle("gone", !show(t)));
+    layout(list);
+    let k = 0;
+    tiles.filter(show).forEach(t => setTimeout(() => t.classList.remove("hide"), 80 * k++));
+  }, 380);
+}
+renderFilters(); renderCollage(); renderTable(); applyFilter(current, false);
+filters.addEventListener("click", e => { const b = e.target.closest("button"); if (b && b.dataset.c !== current) applyFilter(b.dataset.c); });
+
+/* ---------- 详情 ---------- */
+const detail = $("#detail"), dInner = $("#dInner");
+let lastFocus = null;
+function openWork(id) {
+  const list = WORKS, i = list.findIndex(w => w.id === id), w = list[i];
+  if (!w) return;
+  const prev = list[(i - 1 + list.length) % list.length], next = list[(i + 1) % list.length];
+  const imgs = w.sections ? [] : [w.cover ? `<img src="${w.cover}" alt="${w.title} 封面">` : `<div class="typo wide" style="aspect-ratio:16/7"><b>${w.typo.join(" ")}</b><i>${w.typoSub || ""}</i></div>`]
+    .concat((w.shots || []).map(s => `<img src="${s}" alt="${w.title} 截图" loading="lazy">`));
+  dInner.innerHTML = `
+    <div class="rail">
+      <div class="l d-meta small">
+        <div class="grey">${String(i + 1).padStart(2, "0")} / ${String(list.length).padStart(2, "0")}</div>
+        <dl>${Object.entries(w.facts).map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
+        ${w.links.length ? `<div class="d-links">${w.links.map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join("")}</div>` : ""}
+      </div>
+      <div class="r d-body">
+        <h2 class="big" id="dTitle">${w.title}</h2>
+        <div class="small grey" style="margin-top:14px">${w.en} · ${w.cat} · ${w.when}</div>
+        <p>${w.lead}</p>
+        <ul>${w.points.map(p => `<li>${p}</li>`).join("")}</ul>
+        ${!w.cover && !(w.shots || []).length && !w.sections ? `<p class="note">截图整理中。</p>` : ""}
+      </div>
+    </div>
+    ${(w.sections || []).map((sec, k) => `
+      <div class="rail d-sec">
+        <div class="l small grey">${String(k + 1).padStart(2, "0")}</div>
+        <div class="r d-body"><h3>${sec.h}</h3><p>${sec.text}</p></div>
+      </div>
+      ${sec.video && w.video ? `<div class="d-imgs n1"><video src="${w.video}" poster="${w.poster || ""}" controls playsinline preload="metadata"></video></div>` : ""}
+      ${sec.imgs ? `<div class="d-imgs n${sec.imgs.length}">${sec.imgs.map(u => `<img src="${u}" alt="${sec.h}" loading="lazy">`).join("")}</div>` : ""}`).join("")}
+    ${imgs.length ? `<div class="d-imgs">${imgs.join("")}</div>` : ""}
+    <div class="d-nav small"><button data-go="${prev.id}">← ${prev.title}</button><button data-go="${next.id}">${next.title} →</button></div>`;
+  if (!detail.classList.contains("open")) lastFocus = document.activeElement;
+  detail.classList.add("open"); detail.scrollTop = 0; detail.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden"; water.calm = .35;
+  if (location.hash !== "#" + w.id) history.replaceState(null, "", "#" + w.id);
+  $("#dClose").focus({ preventScroll: true });
+}
+function closeWork() {
+  detail.classList.remove("open"); detail.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = ""; water.calm = 1;
+  history.replaceState(null, "", "#work");
+  if (lastFocus) lastFocus.focus({ preventScroll: true });
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest(".tile, button.row, [data-go]");
+  if (t) openWork(t.dataset.id || t.dataset.go);
+});
+$("#dClose").addEventListener("click", closeWork);
+addEventListener("keydown", e => {
+  if (e.key === "Escape") { if (detail.classList.contains("open")) closeWork(); else toggleMenu(false); }
+});
+function fromHash() {
+  const id = location.hash.slice(1);
+  if (WORKS.some(w => w.id === id)) openWork(id);
+  else if (detail.classList.contains("open")) closeWork();
+}
+addEventListener("hashchange", fromHash);
+
+/* ---------- 菜单 ---------- */
+const menu = $("#menu"), menuBtn = $("#menuBtn");
+function toggleMenu(open) {
+  menu.classList.toggle("open", open); menu.setAttribute("aria-hidden", !open); menuBtn.setAttribute("aria-expanded", open);
+}
+menuBtn.addEventListener("click", () => toggleMenu(true));
+$("#menuClose").addEventListener("click", () => toggleMenu(false));
+menu.querySelectorAll("nav a").forEach(a => a.addEventListener("click", () => toggleMenu(false)));
+
+/* =========================================================
+   水面：白色水面上的灰色波纹
+   ========================================================= */
+const water = (() => {
+  const cv = $("#water"), ctx = cv.getContext("2d");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const BASE = 253, LIGHT = 1.05, DAMP = 0.982;
+  let S, W, H, a, b, img, data;
+  const api = { calm: 1 };
+  function setup() {
+    S = innerWidth < 700 ? 5 : 4;
+    W = Math.ceil(innerWidth / S) + 2; H = Math.ceil(innerHeight / S) + 2;
+    cv.width = W; cv.height = H;
+    a = new Float32Array(W * H); b = new Float32Array(W * H);
+    img = ctx.createImageData(W, H); data = img.data;
+    for (let i = 0; i < data.length; i += 4) { data[i] = data[i + 1] = data[i + 2] = BASE; data[i + 3] = 255; }
+    ctx.putImageData(img, 0, 0);
+  }
+  function drop(px, py, r, s) {
+    s *= api.calm;
+    const cx = Math.floor(px / S) + 1, cy = Math.floor(py / S) + 1;
+    for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) {
+      const d2 = i * i + j * j; if (d2 > r * r) continue;
+      const x = cx + i, y = cy + j; if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) continue;
+      a[y * W + x] += s * Math.cos(Math.sqrt(d2) / r * Math.PI / 2);
+    }
+  }
+  function step() {
+    for (let y = 1; y < H - 1; y++) { let i = y * W + 1;
+      for (let x = 1; x < W - 1; x++, i++) b[i] = ((a[i - 1] + a[i + 1] + a[i - W] + a[i + W]) * 0.5 - b[i]) * DAMP; }
+    const t = a; a = b; b = t;
+  }
+  function draw() {
+    for (let y = 1; y < H - 1; y++) { let i = y * W + 1;
+      for (let x = 1; x < W - 1; x++, i++) {
+        let v = BASE + (a[i - 1] - a[i + 1] + a[i - W] - a[i + W]) * LIGHT;
+        v = v < 150 ? 150 : v > 255 ? 255 : v;
+        const p = i << 2; data[p] = data[p + 1] = data[p + 2] = v;
+      } }
+    ctx.putImageData(img, 0, 0);
+  }
+  let idle = 0;
+  function loop() {
+    if (++idle > 220 + Math.random() * 220) { idle = 0; drop(Math.random() * innerWidth, Math.random() * innerHeight, 3, 90); }
+    step(); draw(); requestAnimationFrame(loop);
+  }
+  let lx = -99, ly = -99;
+  addEventListener("pointermove", e => {
+    if (reduce) return;
+    const d = Math.hypot(e.clientX - lx, e.clientY - ly);
+    if (d > 7) { drop(e.clientX, e.clientY, 2, Math.min(70, 30 + d)); lx = e.clientX; ly = e.clientY; idle = 0; }
+  }, { passive: true });
+  addEventListener("pointerdown", e => { if (!reduce) drop(e.clientX, e.clientY, 6, 520); });
+  addEventListener("resize", setup);
+  setup(); if (!reduce) loop();
+  return api;
+})();
+
+/* ---------- 渐显 ---------- */
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .12 });
+document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+document.querySelectorAll(".hero .line > span").forEach((s, i) => s.style.transitionDelay = (0.08 * i) + "s");
+requestAnimationFrame(() => document.body.classList.add("ready"));
+fromHash();
+</script>
+</body>
+</html>
